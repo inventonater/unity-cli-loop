@@ -137,11 +137,7 @@ namespace io.github.hatayama.uLoopMCP
                 client.ConnectedAt
             );
             _connectedTools.Add(toolData);
-            
-            // Persist to settings
-            McpEditorSettings.AddConnectedLLMTool(toolData);
-            
-            // Notify UI
+
             OnConnectedToolsChanged?.Invoke();
         }
 
@@ -151,11 +147,7 @@ namespace io.github.hatayama.uLoopMCP
         public static void RemoveConnectedTool(string toolName)
         {
             _connectedTools.RemoveAll(tool => tool.Name == toolName);
-            
-            // Persist to settings
-            McpEditorSettings.RemoveConnectedLLMTool(toolName);
-            
-            // Notify UI
+
             OnConnectedToolsChanged?.Invoke();
         }
 
@@ -165,11 +157,7 @@ namespace io.github.hatayama.uLoopMCP
         public static void ClearConnectedTools()
         {
             _connectedTools.Clear();
-            
-            // Persist to settings
-            McpEditorSettings.ClearConnectedLLMTools();
-            
-            // Notify UI
+
             OnConnectedToolsChanged?.Invoke();
         }
 
@@ -267,6 +255,11 @@ namespace io.github.hatayama.uLoopMCP
             foreach (ConnectedLLMToolData tool in toolsToRemove)
             {
                 RemoveConnectedTool(tool.Name);
+            }
+
+            if (toolsToRemove.Count > 0)
+            {
+                SyncConnectedToolsToSettings();
             }
         }
 
