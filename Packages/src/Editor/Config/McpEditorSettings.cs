@@ -607,8 +607,10 @@ namespace io.github.hatayama.uLoopMCP
         /// </summary>
         public static void ClearAllCompileRequests()
         {
-            SetCompileRequests(new CompileRequestData[0]);
-            SetPendingCompileRequestIds(new string[0]);
+            UpdateSettings(s => s with {
+                compileRequests = new CompileRequestData[0],
+                pendingCompileRequestIds = new string[0]
+            });
         }
 
         /// <summary>

@@ -116,14 +116,12 @@ namespace io.github.hatayama.uLoopMCP
 
             if (result.Success)
             {
-                // UseCase creates a new server instance, so we keep a reference here
-                // for compatibility with existing code
                 mcpServer = result.ServerInstance;
 
-                // Sync session state with the running server to enable domain reload recovery
-                // even if mcpServer instance becomes null unexpectedly
-                McpEditorSettings.SetIsServerRunning(true);
-                McpEditorSettings.SetCustomPort(mcpServer.Port);
+                McpEditorSettings.UpdateSettings(s => s with {
+                    isServerRunning = true,
+                    customPort = mcpServer.Port
+                });
 
             }
             else
@@ -301,15 +299,11 @@ namespace io.github.hatayama.uLoopMCP
                 mcpServer = new McpBridgeServer();
                 mcpServer.StartServer(port);
 
-                // Update settings with the actual port used (same as requested)
-                if (McpEditorSettings.GetCustomPort() != port)
-                {
-                    McpEditorSettings.SetCustomPort(port);
-                }
-
-                // Clear server-side reconnecting flag on successful restoration
-                // NOTE: Do NOT clear UI display flag here - let it be cleared by timeout or client connection
-                McpEditorSettings.SetIsReconnecting(false);
+                // NOTE: Do NOT clear showReconnectingUI here - let it be cleared by timeout or client connection
+                McpEditorSettings.UpdateSettings(s => s with {
+                    customPort = port,
+                    isReconnecting = false
+                });
 
                 // Tools changed notification will be sent by OnAfterAssemblyReload
             }
@@ -661,9 +655,11 @@ namespace io.github.hatayama.uLoopMCP
 
                 if (!started)
                 {
-                    // Ensure session reflects stopped state on failure
-                    McpEditorSettings.ClearServerSession();
-                    McpEditorSettings.ClearReconnectingFlags();
+                    McpEditorSettings.UpdateSettings(s => s with {
+                        isServerRunning = false,
+                        isReconnecting = false,
+                        showReconnectingUI = false
+                    });
                     Debug.LogError($"[{McpConstants.PROJECT_NAME}] Recovery failed: no available port to bind. SavedPort={savedPort}, LastAttemptPort={chosenPort}");
                     throw new InvalidOperationException($"Failed to bind any recovery port. SavedPort={savedPort}, LastAttemptPort={chosenPort}.");
                 }
@@ -681,16 +677,13 @@ namespace io.github.hatayama.uLoopMCP
                     // Continue with running server even if config update fails
                 }
 
-                // Mark running and update settings
-                McpEditorSettings.SetIsServerRunning(true);
-                if (McpEditorSettings.GetCustomPort() != chosenPort)
-                {
-                    McpEditorSettings.SetCustomPort(chosenPort);
-                }
-
-                // Clear reconnection-related flags on successful recovery
-                McpEditorSettings.ClearReconnectingFlags();
-                McpEditorSettings.ClearPostCompileReconnectingUI();
+                McpEditorSettings.UpdateSettings(s => s with {
+                    isServerRunning = true,
+                    customPort = chosenPort,
+                    isReconnecting = false,
+                    showReconnectingUI = false,
+                    showPostCompileReconnectingUI = false
+                });
 
                 ActivateStartupProtection(5000);
             }
