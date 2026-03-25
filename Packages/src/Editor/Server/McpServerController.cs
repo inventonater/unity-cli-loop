@@ -70,8 +70,9 @@ namespace io.github.hatayama.uLoopMCP
             // Note: ConnectedToolsMonitoringService has [InitializeOnLoad] so it's automatically initialized
             // This comment ensures the service initialization order is documented
 
-            // Restore server state on initialization.
-            RestoreServerStateIfNeeded();
+            // Defer server state restoration by one frame so all [InitializeOnLoadMethod]
+            // handlers (e.g. external port configuration) complete first.
+            EditorApplication.delayCall += RestoreServerStateIfNeeded;
         }
 
         /// <summary>
