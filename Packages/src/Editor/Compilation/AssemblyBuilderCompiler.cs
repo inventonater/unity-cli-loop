@@ -222,7 +222,7 @@ namespace io.github.hatayama.uLoopMCP
 
             AssemblyBuilder builder = new AssemblyBuilder(dllPath, sourcePath)
             {
-                referencesOptions = ReferencesOptions.UseEngineModules,
+                referencesOptions = ReferencesOptions.None,
                 additionalReferences = references
             };
 
@@ -320,7 +320,8 @@ namespace io.github.hatayama.uLoopMCP
                     return _cachedAppDomainReferences;
                 }
 
-                HashSet<string> seen = new(StringComparer.OrdinalIgnoreCase);
+                HashSet<string> seenPaths = new(StringComparer.OrdinalIgnoreCase);
+                HashSet<string> seenNames = new(StringComparer.OrdinalIgnoreCase);
                 List<string> refs = new();
 
                 foreach (Assembly asm in assemblies)
@@ -340,7 +341,20 @@ namespace io.github.hatayama.uLoopMCP
                         continue;
                     }
 
-                    if (string.IsNullOrEmpty(location) || !File.Exists(location) || !seen.Add(location))
+                    if (string.IsNullOrEmpty(location) || !File.Exists(location) || !seenPaths.Add(location))
+                    {
+                        continue;
+                    }
+
+                    if (!seenNames.Add(asm.GetName().Name))
+                    {
+                        continue;
+                    }
+
+                    if (location.IndexOf("/Facades/", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        location.IndexOf("/shims/", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        location.IndexOf("\\Facades\\", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        location.IndexOf("\\shims\\", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         continue;
                     }
